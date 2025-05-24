@@ -1,0 +1,27 @@
+{
+  "name": "cybersecurityawareness",
+  "version": "1.0.0",
+  "description": "Website to raise awareness on Cyber Security",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ref4t/CyberSecurityAwareness.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/ref4t/CyberSecurityAwareness/issues"
+  },
+  "homepage": "https://github.com/ref4t/CyberSecurityAwareness#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
