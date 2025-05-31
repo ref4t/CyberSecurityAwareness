@@ -34,8 +34,8 @@ export const registration = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "Prod",
-      sameSite: process.env.NODE_ENV === "Prod" ? "none" : "strict",
+      secure: process.env.NODE_ENV === "Production",
+      sameSite: process.env.NODE_ENV === "Production" ? "none" : "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -84,8 +84,8 @@ export const login = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "Prod",
-      sameSite: process.env.NODE_ENV === "Prod" ? "none" : "strict",
+      secure: process.env.NODE_ENV === "Production",
+      sameSite: process.env.NODE_ENV === "Production" ? "none" : "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -104,8 +104,8 @@ export const login = async (req, res) => {
 export const logout = async (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "Prod",
-    sameSite: process.env.NODE_ENV === "Prod" ? "none" : "strict",
+    secure: process.env.NODE_ENV === "Production",
+    sameSite: process.env.NODE_ENV === "Production" ? "none" : "strict",
   });
   return res.status(200).json({ success: true, message: "Logged out" });
 };
@@ -249,3 +249,14 @@ export const resetPassword = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+export const verifyT = async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.sendStatus(401);
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({ user: decoded });
+  } catch {
+    res.sendStatus(403);
+  }
+}

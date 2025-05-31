@@ -6,7 +6,8 @@ import {
     emailVerifyOtp,
     verifyOtp,
     sendResetOtp,
-    resetPassword
+    resetPassword,
+    verifyT
 } from '../Controllers/AuthController.js';
 import userAuth from '../Middleware/UserAuth.js';
 import otpRateLimiter from '../Middleware/otpRateLimiter.js';
@@ -25,5 +26,8 @@ authRouter.post('/verify-otp', userAuth, otpRateLimiter, verifyOtp);
 //Password reset
 authRouter.post('/send-reset-otp', otpRateLimiter, sendResetOtp);
 authRouter.post('/reset-password', otpRateLimiter, resetPassword);
+
+//verify authentication
+authRouter.get('/verify', verifyT);
 
 export default authRouter;
