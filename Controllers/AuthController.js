@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import userModel from "../Models/UserModel.js";
 import transporter from "../Config/nodemailer.js";
+import { emailVrify,welcomeEmail,passReset } from "../Config/emailTemplates.js";
 
 /**
  * @desc   Register a new user
@@ -44,7 +45,8 @@ export const registration = async (req, res) => {
       from: process.env.SENDER_EMAIL,
       to: user.email,
       subject: "Welcome to Cyber Security Awareness Website!",
-      text: "Your account has been created successfully. Welcome aboard!",
+      //text: "Your account has been created successfully. Welcome aboard!",
+      html: welcomeEmail.replace("{{name}}",user.name)
     });
 
     return res.status(201).json({ success: true });
