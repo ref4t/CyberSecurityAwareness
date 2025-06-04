@@ -8,10 +8,10 @@ export const getUserData = async (req, res) => {
 
     const user = await userModel.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    const { _id, name, email, isAccountVerified } = user;
+    const { _id, name, email, isAccountVerified, verifyOtp } = user;
 
     return res.json({
-      user: { _id, name, email, isAccountVerified }
+      user: { _id, name, email, isAccountVerified, hasOtp: !!verifyOtp }
     });
   } catch (error) {
     console.error("Error in getUserData:", error);

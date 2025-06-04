@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import userModel from "../Models/UserModel.js";
 import transporter from "../Config/nodemailer.js";
-import { emailVrify,welcomeEmail,passReset } from "../Config/emailTemplates.js";
+import { emailVerify, welcomeEmail, passReset } from "../Config/emailTemplates.js";
 
 /**
  * @desc   Register a new user
@@ -41,13 +41,15 @@ export const registration = async (req, res) => {
     });
 
     // Send welcome email
+    const compiledWelcomeEmail = welcomeEmail.replace("{{name}}", user.name);
+
     await transporter.sendMail({
       from: process.env.SENDER_EMAIL,
       to: user.email,
-      subject: "Welcome to Cyber Security Awareness Website!",
-      //text: "Your account has been created successfully. Welcome aboard!",
-      html: welcomeEmail.replace("{{name}}",user.name)
+      subject: "Welcome to CyberShield!",
+      html: compiledWelcomeEmail,
     });
+
 
     return res.status(201).json({ success: true });
   } catch (error) {
@@ -132,12 +134,16 @@ export const emailVerifyOtp = async (req, res) => {
     await user.save();
 
     // Send OTP email
+    const compiledHtml = emailVerify
+        .replace("{{name}}", user.name)
+        .replace("{{otp}}", otp);
+
     await transporter.sendMail({
       from: process.env.SENDER_EMAIL,
       to: user.email,
-      subject: "Verify Your Account",
-      text: `Your OTP is ${otp}`,
-    });
+      subject: "Verify Your Account - CyberShield",
+      html: compiledHtml,
+    })
 
     return res.status(200).json({ success: true, message: "Verification email sent" });
   } catch (error) {
@@ -201,12 +207,14 @@ export const sendResetOtp = async (req, res) => {
     user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000; // 15 minutes
     await user.save();
 
-    // Send OTP email
+    // Send OTP email passReset
     await transporter.sendMail({
       from: process.env.SENDER_EMAIL,
       to: user.email,
-      subject: "Password Reset OTP",
-      text: `Your password reset OTP is: ${otp}`,
+      subject: "Reset Your CyberShield Password",
+      html: passReset
+        .replace("{{name}}", user.name)
+        .replace("{{resetOtp}}", otp),
     });
 
     return res.status(200).json({ success: true, message: "OTP sent to your email" });
