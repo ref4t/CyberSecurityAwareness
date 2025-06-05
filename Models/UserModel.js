@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   isBusiness: { type: Boolean, default: false },
   businessName: { type: String },
   businessAddress: { type: String },
-  businessDetails: { type: String },
+  businessAbn: { type: String },
 
   verifyOtp: { type: String, default: '' },
   verifyOtpExpireAt: { type: Number, default: 0 },
