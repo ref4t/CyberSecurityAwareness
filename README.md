@@ -1,4 +1,7 @@
-# Cybersecurity Awareness Website - Backend
+
+# CyberSecurityAwareness
+Website to raise awareness on Cyber Security
+
 
 This repository contains the **Express.js** backend for the Cybersecurity Awareness Website. It provides RESTful API endpoints for authentication, quizzes, feedback, and email verification/reset flows.
 
@@ -100,4 +103,5 @@ backend/
 
 ---
 
-*Maintained by \[Your Name]*
+*Maintained by Abdullah
+

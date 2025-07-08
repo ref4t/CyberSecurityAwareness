@@ -1,10 +1,20 @@
-import Router from 'express'
-import { loginPage,userLogin } from '../Controllers/LoginController.js'
+import express from "express";
+import {
+  getUserData,
+  updateUserDetails,
+  updateUserPassword,
+} from "../Controllers/UserController.js"
+import userAuth from "../Middleware/userAuth.js";
 
-const router = Router()
+const userRouter = express.Router();
 
-router.get('/login',loginPage)
-router.post('/login',userLogin)
-// router.get('/user/:username',userController)
+// GET   /api/user/data            → returns current user data
+userRouter.get("/data", userAuth, getUserData);
 
-export default router
+// PUT   /api/user/update        → update name, email, (business fields if role is business)
+userRouter.put("/update", userAuth, updateUserDetails);
+
+// PUT   /api/user/update-password → update currentPassword → newPassword
+userRouter.put("/update-password", userAuth, updateUserPassword);
+
+export default userRouter;
