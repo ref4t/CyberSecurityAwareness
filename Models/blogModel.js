@@ -1,32 +1,34 @@
+// src/Models/blogModel.js
 import mongoose from "mongoose";
 
 const blogSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
   },
   content: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
   },
   imageUrl: {
     type: String,
-    default: ""
+    default: "",
   },
-  createdBy: {
+  // Rename createdBy to author for clarity
+  author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true
+    required: true,
   },
   status: {
     type: String,
-    enum: ["pending", "approved"],
-    default: "pending"
-  }
+    enum: ["pending", "approved", "archived"],
+    default: "pending",
+  },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 export default mongoose.models.Blog || mongoose.model("Blog", blogSchema);

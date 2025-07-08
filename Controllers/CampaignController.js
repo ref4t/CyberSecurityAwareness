@@ -1,6 +1,6 @@
 import Campaign from "../Models/campaignModel.js";
 import userModel from "../Models/userModel.js";
-import path from "path";
+
 /**
  * GET /api/campaigns
  * Public: list all campaigns
