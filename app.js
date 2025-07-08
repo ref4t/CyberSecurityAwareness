@@ -10,8 +10,10 @@ import cookieParser from "cookie-parser";
 import authRouter from "./Routes/authRoutes.js";
 import connectDB from "./Config/MongoDB.js";
 import userRoutes from "./Routes/userRoutes.js";
-import resourceRoutes from "./Routes/resourceRoutes.js"
-import campaignRoutes from "./Routes/campaignRoutes.js"
+import resourceRoutes from "./Routes/resourceRoutes.js";
+import campaignRoutes from "./Routes/campaignRoutes.js";
+import blogRoutes from "./Routes/blogRoutes.js";
+import adminRoutes from "./Routes/adminRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -72,6 +74,8 @@ app.use("/api/auth", authRouter);
 app.use("/api/user", userRoutes);
 app.use("/api/resources", resourceRoutes);
 app.use("/api/campaigns", campaignRoutes);
+app.use("/api/blogs", blogRoutes);
+app.use("/api/admin", adminRoutes);
 
 // ── 5. GLOBAL ERROR HANDLER ────────────────────────────────────────────────────
 app.use((err, _req, res, _next) => {
