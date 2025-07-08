@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import userModel from "../Models/UserModel.js";
+import userModel from "../Models/userModel.js";
 import transporter from "../Config/nodemailer.js";
 import { emailVerify, welcomeEmail, passReset } from "../Config/emailTemplates.js";
 
@@ -10,51 +10,88 @@ import { emailVerify, welcomeEmail, passReset } from "../Config/emailTemplates.j
  * @access Public
  */
 export const registration = async (req, res) => {
-  const { name, email, password } = req.body;
+  const {
+    name,
+    email,
+    password,
+    role = "general",
+    businessName,
+    businessAddress,
+    businessAbn
+  } = req.body;
 
   // Validate required fields
   if (!name || !email || !password) {
-    return res.status(400).json({ success: false, message: "Name, email, and password are required" });
+    return res.status(400).json({
+      success: false,
+      message: "Name, email, and password are required"
+    });
+  }
+
+  // If business role, validate business details
+  if (role === "business" && (!businessName || !businessAddress || !businessAbn)) {
+    return res.status(400).json({
+      success: false,
+      message: "Business name, address, and ABN are required for business registration"
+    });
   }
 
   try {
     // Prevent duplicate accounts
-    const existingUser = await userModel.findOne({ email: email.trim().toLowerCase() });
+    const existingUser = await userModel.findOne({
+      email: email.trim().toLowerCase()
+    });
     if (existingUser) {
-      return res.status(409).json({ success: false, message: "User already exists" });
+      return res.status(409).json({
+        success: false,
+        message: "User already exists"
+      });
     }
 
     // Hash password
     const hashedPass = await bcrypt.hash(password, 10);
 
-    // Create and save user
-    const user = new userModel({ name: name.trim(), email: email.trim().toLowerCase(), password: hashedPass });
+    // Create new user document
+    const user = new userModel({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password: hashedPass,
+      role,
+      ...(role === "business" && {
+        businessName: businessName.trim(),
+        businessAddress: businessAddress.trim(),
+        businessAbn: businessAbn.trim()
+      })
+    });
     await user.save();
 
     // Generate JWT and set cookie
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d"
+    });
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "Production",
       sameSite: process.env.NODE_ENV === "Production" ? "none" : "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
     // Send welcome email
     const compiledWelcomeEmail = welcomeEmail.replace("{{name}}", user.name);
+    // await transporter.sendMail({
+    //   from: process.env.SENDER_EMAIL,
+    //   to: user.email,
+    //   subject: "Welcome to CyberShield!",
+    //   html: compiledWelcomeEmail
+    // });
 
-    await transporter.sendMail({
-      from: process.env.SENDER_EMAIL,
-      to: user.email,
-      subject: "Welcome to CyberShield!",
-      html: compiledWelcomeEmail,
-    });
-
-
-    return res.status(201).json({ success: true });
+    return res.status(201).json({ success: true, message: "Registration successful" });
   } catch (error) {
     console.error("Registration Error:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
   }
 };
 
@@ -270,3 +307,96 @@ export const verifyT = async (req, res) => {
     res.sendStatus(403);
   }
 }
+
+/**
+ * Update user profile/details
+ */
+export const updateUserDetails = async (req, res) => {
+  const userId = req.user.id;
+  const {
+    name,
+    email,
+    role,
+    businessName,
+    businessAddress,
+    businessAbn
+  } = req.body;
+
+  try {
+    const user = await userModel.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Update basics
+    user.name = name || user.name;
+    user.email = email?.trim().toLowerCase() || user.email;
+
+    // If converting or editing business fields
+    if (role === "business") {
+      if (!businessName || !businessAddress || !businessAbn) {
+        return res
+          .status(400)
+          .json({ message: "Incomplete business details" });
+      }
+      user.role = "business";
+      user.businessName = businessName;
+      user.businessAddress = businessAddress;
+      user.businessAbn = businessAbn;
+    }
+
+    await user.save();
+    return res.json({
+      message: "Profile updated",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        businessName: user.businessName,
+        businessAddress: user.businessAddress,
+        businessAbn: user.businessAbn
+      }
+    });
+  } catch (err) {
+    console.error("UpdateDetails Error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+/**
+ * Update user password
+ */
+export const updateUserPassword = async (req, res) => {
+  const userId = req.user.id;
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res
+      .status(400)
+      .json({ message: "Current and new password required" });
+  }
+  if (newPassword.length < 6) {
+    return res
+      .status(400)
+      .json({ message: "New password must be at least 6 characters" });
+  }
+
+  try {
+    const user = await userModel.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Verify current password
+    const match = await bcrypt.compare(currentPassword, user.password);
+    if (!match) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    // Hash & save new password
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    return res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("UpdatePassword Error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

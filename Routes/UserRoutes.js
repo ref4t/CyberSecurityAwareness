@@ -1,10 +1,20 @@
 import express from "express";
-import { getUserData } from "../Controllers/UserController.js";
-import userAuth from '../Middleware/UserAuth.js';
+import {
+  getUserData,
+  updateUserDetails,
+  updateUserPassword,
+} from "../Controllers/UserController.js"
+import userAuth from "../Middleware/userAuth.js";
 
-const router = express.Router();
+const userRouter = express.Router();
 
-// GET /api/user/me
-router.get("/data", userAuth, getUserData);
+// GET   /api/user/data            → returns current user data
+userRouter.get("/data", userAuth, getUserData);
 
-export default router;
+// PUT   /api/user/update        → update name, email, (business fields if role is business)
+userRouter.put("/update", userAuth, updateUserDetails);
+
+// PUT   /api/user/update-password → update currentPassword → newPassword
+userRouter.put("/update-password", userAuth, updateUserPassword);
+
+export default userRouter;

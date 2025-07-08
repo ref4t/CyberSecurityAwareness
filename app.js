@@ -1,14 +1,20 @@
 import express from "express";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
 import cors from "cors";
 import helmet from "helmet";               // Add basic security headers
 import rateLimit from "express-rate-limit"; // Protect against brute-force
 import "dotenv/config";
 import cookieParser from "cookie-parser";
-import authRouter from "./Routes/AuthRoutes.js";
+import authRouter from "./Routes/authRoutes.js";
 import connectDB from "./Config/MongoDB.js";
-import userRoutes from "./Routes/UserRoutes.js";
+import userRoutes from "./Routes/userRoutes.js";
+import resourceRoutes from "./Routes/resourceRoutes.js"
+import campaignRoutes from "./Routes/campaignRoutes.js"
 
 const app = express();
+app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 // ── 1. CONNECT DATABASE ───────────────────────────────────────────────────────
@@ -17,6 +23,20 @@ connectDB();
 // ── 2. GLOBAL MIDDLEWARE ──────────────────────────────────────────────────────
 // Security headers
 app.use(helmet());
+
+// recreate __dirname in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+
+// ensure uploads folder exists
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// serve static files from uploads
+app.use("/uploads", express.static(uploadDir));
 
 // Rate limiting (e.g. 100 requests per 15 minutes per IP)
 app.use(
@@ -50,6 +70,8 @@ app.get("/", (_req, res) => {
 // ── 4. ROUTES ──────────────────────────────────────────────────────────────────
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRoutes);
+app.use("/api/resources", resourceRoutes);
+app.use("/api/campaigns", campaignRoutes);
 
 // ── 5. GLOBAL ERROR HANDLER ────────────────────────────────────────────────────
 app.use((err, _req, res, _next) => {
