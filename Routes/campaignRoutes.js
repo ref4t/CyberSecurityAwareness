@@ -7,7 +7,7 @@ import {
   createCampaign,
   updateCampaign,
   deleteCampaign,
-} from "../controllers/campaignController.js";
+} from "../Controllers/CampaignController.js";
 
 const router = express.Router();
 
