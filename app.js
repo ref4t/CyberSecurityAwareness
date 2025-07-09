@@ -60,7 +60,7 @@ app.use(cookieParser());
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
 const allowedOrigins = [
   FRONTEND_ORIGIN,
-  "https://cybershieldacs.netlify.app"  // your Netlify URL
+  "https://cyber-awareness-frontend.onrender.com"  // your Netlify URL
 ];
 
 app.use(
