@@ -56,11 +56,25 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Cookie parser
 app.use(cookieParser());
 
-// CORS (lock down origin in production)
+// ── CORS ────────────────────────────────────────────────────────────────────────
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
+const allowedOrigins = [
+  FRONTEND_ORIGIN,
+  "https://cybershieldacs.netlify.app"  // your Netlify URL
+];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_ORIGIN || "http://localhost:4000",
-    credentials: true,
+    origin: (origin, callback) => {
+      // allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      callback(new Error(`CORS policy: origin ${origin} not allowed`));
+    },
+    credentials: true
+
   })
 );
 
