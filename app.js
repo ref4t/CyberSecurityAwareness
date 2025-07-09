@@ -56,33 +56,30 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Cookie parser
 app.use(cookieParser());
 
-const FRONTEND_ORIGIN =
-  process.env.FRONTEND_ORIGIN || "http://localhost:3000";
+// CORS (lock down origin in production)
+// ── CORS ────────────────────────────────────────────────────────────────────────
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
+const allowedOrigins = [
+  FRONTEND_ORIGIN,
+  "https://cybershieldacs.netlify.app"  // your Netlify URL
+];
 
 app.use(
   cors({
-    origin: FRONTEND_ORIGIN,
-    credentials: true,
+    origin: (origin, callback) => {
+      // allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      callback(new Error(`CORS policy: origin ${origin} not allowed`));
+    },
+    credentials: true
   })
 );
 
-// handle OPTIONS pre-flight the same way
-app.options(
-  "*",
-  cors({
-    origin: FRONTEND_ORIGIN,
-    credentials: true,
-  })
-);
 
-// handle OPTIONS pre-flight the same way
-app.options(
-  "*",
-  cors({
-    origin: FRONTEND_ORIGIN,
-    credentials: true,
-  })
-);
+
 // ── 3. HEALTHCHECK / BASE ROUTE ────────────────────────────────────────────────
 app.get("/", (_req, res) => {
   res.status(200).send("Hey team");
