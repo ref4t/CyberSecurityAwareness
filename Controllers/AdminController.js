@@ -1,4 +1,4 @@
-import userModel from "../Models/userModel.js";
+import userModel from "../Models/UserModel.js";
 import Campaign from "../Models/campaignModel.js";
 import Blog from "../Models/blogModel.js";
 
