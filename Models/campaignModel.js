@@ -34,7 +34,7 @@ const campaignSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["active", "pending", "archived"],
+    enum: ["active", "pending", "archived", "featured"],
     default: "pending"
   }
 }, {

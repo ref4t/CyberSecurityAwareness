@@ -1,6 +1,7 @@
 // routes/resourceRoutes.js
 
 import express from "express";
+import multer from "multer";
 import userAuth from "../Middleware/UserAuth.js";
 import {
   getAllResources,
@@ -12,6 +13,13 @@ import {
 
 const router = express.Router();
 
+// multer setup: store uploads in ./uploads/ and use original filename
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => cb(null, file.originalname),
+});
+const upload = multer({ storage });
+
 // Public: List all resources
 router.get("/", getAllResources);
 
@@ -19,10 +27,10 @@ router.get("/", getAllResources);
 router.get("/:id", getResourceById);
 
 // Protected: Create a new resource (any authenticated user)
-router.post("/", userAuth, createResource);
+router.post("/", userAuth, upload.single("image"), createResource);
 
 // Protected: Update an existing resource (only uploader or admin)
-router.put("/:id", userAuth, updateResource);
+router.put("/:id", userAuth, upload.single("image"), updateResource);
 
 // Protected: Delete a resource (only uploader or admin)
 router.delete("/:id", userAuth, deleteResource);

@@ -90,7 +90,7 @@ export const approveCampaign = async (req, res) => {
 export const updateCampaignStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    if (!["pending", "active", "archived"].includes(status)) {
+    if (!["pending", "active", "archived","featured"].includes(status)) {
       return res.status(400).json({ success: false, message: "Invalid status" });
     }
     const campaign = await Campaign.findById(req.params.id);
