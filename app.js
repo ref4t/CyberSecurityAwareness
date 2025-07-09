@@ -57,31 +57,25 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
 
 // ── CORS ────────────────────────────────────────────────────────────────────────
+// 1. Build your list of allowed origins
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
 const allowedOrigins = [
   FRONTEND_ORIGIN,
-  "https://cyber-awareness-frontend.onrender.com"  // your Netlify URL
+  "https://cybershieldacs.netlify.app"
 ];
 
+// 2. Pass that array directly to cors()
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // allow requests with no origin (like mobile apps or curl)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      callback(new Error(`CORS policy: origin ${origin} not allowed`));
-    },
-    credentials: true
-
+    origin: allowedOrigins,
+    credentials: true,
+    // some browsers choke on empirical 204 for OPTIONS, so you can bump it:
+    optionsSuccessStatus: 204
   })
 );
 
-app.options("/*", cors({
-  origin: allowedOrigins,
-  credentials: true
-}));
+// no need for any app.options() call here
+
 
 // ── 3. HEALTHCHECK / BASE ROUTE ────────────────────────────────────────────────
 app.get("/", (_req, res) => {
