@@ -56,25 +56,19 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Cookie parser
 app.use(cookieParser());
 
-// CORS (lock down origin in production)
 // ── CORS ────────────────────────────────────────────────────────────────────────
+// at the top of your file
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
 const allowedOrigins = [
   FRONTEND_ORIGIN,
-  "https://cybershieldacs.netlify.app"  // your Netlify URL
+  "https://cyber-awareness-frontend.onrender.com"  // ← new frontend URL
 ];
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // allow requests with no origin (like mobile apps or curl)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      callback(new Error(`CORS policy: origin ${origin} not allowed`));
-    },
-    credentials: true
+    origin: allowedOrigins,
+    credentials: true,
+    optionsSuccessStatus: 204
   })
 );
 
