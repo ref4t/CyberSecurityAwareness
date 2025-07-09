@@ -56,33 +56,16 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Cookie parser
 app.use(cookieParser());
 
-const FRONTEND_ORIGIN =
-  process.env.FRONTEND_ORIGIN || "http://localhost:3000";
-
+// CORS (lock down origin in production)
 app.use(
   cors({
-    origin: FRONTEND_ORIGIN,
+    origin: process.env.FRONTEND_ORIGIN || "http://localhost:4000",
     credentials: true,
   })
 );
 
-// handle OPTIONS pre-flight the same way
-app.options(
-  "*",
-  cors({
-    origin: FRONTEND_ORIGIN,
-    credentials: true,
-  })
-);
 
-// handle OPTIONS pre-flight the same way
-app.options(
-  "*",
-  cors({
-    origin: FRONTEND_ORIGIN,
-    credentials: true,
-  })
-);
+
 // ── 3. HEALTHCHECK / BASE ROUTE ────────────────────────────────────────────────
 app.get("/", (_req, res) => {
   res.status(200).send("Hey team");
