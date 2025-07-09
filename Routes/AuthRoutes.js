@@ -9,7 +9,7 @@ import {
     resetPassword,
     verifyT
 } from '../Controllers/AuthController.js';
-import userAuth from '../Middleware/userAuth.js';
+import userAuth from '../Middleware/UserAuth.js';
 import otpRateLimiter from '../Middleware/otpRateLimiter.js';
 
 const authRouter = express.Router();
