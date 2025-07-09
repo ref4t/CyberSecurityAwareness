@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import userModel from "../Models/userModel.js";
+import userModel from "../Models/UserModel.js";
 
 /**
  * GET /api/user/me
