@@ -1,5 +1,5 @@
 import express from "express";
-import userAuth from "../Middleware/userAuth.js";
+import userAuth from "../Middleware/UserAuth.js";
 import adminOnly from "../Middleware/adminOnly.js";
 import {
   getAllUsers,
