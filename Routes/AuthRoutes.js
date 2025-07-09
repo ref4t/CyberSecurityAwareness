@@ -23,11 +23,12 @@ authRouter.post('/logout', logout);
 authRouter.post('/send-verify-otp', userAuth, otpRateLimiter, emailVerifyOtp);
 authRouter.post('/verify-otp', userAuth, otpRateLimiter, verifyOtp);
 
-//Password reset
+//Password reset Routes
 authRouter.post('/send-reset-otp', otpRateLimiter, sendResetOtp);
 authRouter.post('/reset-password', otpRateLimiter, resetPassword);
 
-//verify authentication
+//verify authentication Routes
 authRouter.get('/verify', verifyT);
 
 export default authRouter;
+

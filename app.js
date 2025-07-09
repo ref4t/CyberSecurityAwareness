@@ -7,9 +7,9 @@ import helmet from "helmet";               // Add basic security headers
 import rateLimit from "express-rate-limit"; // Protect against brute-force
 import "dotenv/config";
 import cookieParser from "cookie-parser";
-import authRouter from "./Routes/authRoutes.js";
+import authRouter from "./Routes/AuthRoutes.js";
 import connectDB from "./Config/MongoDB.js";
-import userRoutes from "./Routes/userRoutes.js";
+import userRoutes from "./Routes/serRoutes.js";
 import resourceRoutes from "./Routes/resourceRoutes.js";
 import campaignRoutes from "./Routes/campaignRoutes.js";
 import blogRoutes from "./Routes/blogRoutes.js";
