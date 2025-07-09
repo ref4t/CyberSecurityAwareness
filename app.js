@@ -56,7 +56,6 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Cookie parser
 app.use(cookieParser());
 
-// CORS (lock down origin in production)
 // ── CORS ────────────────────────────────────────────────────────────────────────
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
 const allowedOrigins = [
@@ -75,6 +74,7 @@ app.use(
       callback(new Error(`CORS policy: origin ${origin} not allowed`));
     },
     credentials: true
+
   })
 );
 
