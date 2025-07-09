@@ -1,12 +1,14 @@
 import express from "express";
-import path, { dirname } from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
 import cors from "cors";
-import helmet from "helmet";               // Add basic security headers
-import rateLimit from "express-rate-limit"; // Protect against brute-force
+import path from "path";
+import fs from "fs";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import "dotenv/config";
 import cookieParser from "cookie-parser";
+import { fileURLToPath } from "url";
+
+// Import routes
 import authRouter from "./Routes/AuthRoutes.js";
 import connectDB from "./Config/MongoDB.js";
 import userRoutes from "./Routes/UserRoutes.js";
@@ -15,71 +17,90 @@ import campaignRoutes from "./Routes/campaignRoutes.js";
 import blogRoutes from "./Routes/blogRoutes.js";
 import adminRoutes from "./Routes/adminRoutes.js";
 
+// Init app and define port
 const app = express();
-app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
-// ── 1. CONNECT DATABASE ───────────────────────────────────────────────────────
+// Recreate __dirname
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// ── 1. CONNECT DATABASE ─────────────────────────────────────
 connectDB();
 
-// ── 2. GLOBAL MIDDLEWARE ──────────────────────────────────────────────────────
-// Security headers
-app.use(helmet());
-
-// recreate __dirname in ES module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-
-// ensure uploads folder exists
+// ── 2. CREATE UPLOADS FOLDER IF MISSING ─────────────────────
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// serve static files from uploads
-app.use("/uploads", express.static(uploadDir));
+// ── 3. MIDDLEWARE ───────────────────────────────────────────
 
-// Rate limiting (e.g. 100 requests per 15 minutes per IP)
+// CORS config
+const allowedOrigins = [
+  process.env.FRONTEND_ORIGIN || "http://localhost:5173",
+  "https://cyber-awareness-frontend.onrender.com",
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+};
+
+// Apply general CORS for APIs
+app.use(cors(corsOptions));
+
+// Security headers
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "http://localhost:5173", "http://localhost:3000", "https://cyber-awareness-frontend.onrender.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    crossOriginResourcePolicy: false, // Allow cross-origin image loading
+  })
+);
+
+// Rate limiting
 app.use(
   rateLimit({
-    windowMs:  60 * 1000,
+    windowMs: 60 * 1000, // 1 minute
     max: 100,
     message: { success: false, message: "Too many requests, please try again later." },
   })
 );
 
-// Body parser (with reasonable size limit)
+// JSON and form parsing
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
 // Cookie parser
 app.use(cookieParser());
 
-// ── CORS ────────────────────────────────────────────────────────────────────────
-// at the top of your file
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
-const allowedOrigins = [
-  FRONTEND_ORIGIN,
-  "https://cyber-awareness-frontend.onrender.com"  // ← new frontend URL
-];
+// ── 4. STATIC FILES ──────────────────────────────────────────
 
+// Serve /uploads with proper CORS headers
 app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-    optionsSuccessStatus: 204
-  })
+  "/uploads",
+  cors(corsOptions), // allow cross-origin image access
+  express.static(path.join(__dirname, "uploads"))
 );
 
-
-
-// ── 3. HEALTHCHECK / BASE ROUTE ────────────────────────────────────────────────
+// ── 5. ROUTES ────────────────────────────────────────────────
 app.get("/", (_req, res) => {
   res.status(200).send("Hey team");
 });
 
-// ── 4. ROUTES ──────────────────────────────────────────────────────────────────
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRoutes);
 app.use("/api/resources", resourceRoutes);
@@ -87,7 +108,7 @@ app.use("/api/campaigns", campaignRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/admin", adminRoutes);
 
-// ── 5. GLOBAL ERROR HANDLER ────────────────────────────────────────────────────
+// ── 6. ERROR HANDLING ───────────────────────────────────────
 app.use((err, _req, res, _next) => {
   console.error("Unhandled Error:", err);
   res.status(err.status || 500).json({
@@ -96,7 +117,7 @@ app.use((err, _req, res, _next) => {
   });
 });
 
-// ── 6. START SERVER ────────────────────────────────────────────────────────────
+// ── 7. START SERVER ─────────────────────────────────────────
 app.listen(PORT, () =>
   console.log(`⚡️ Server running: http://localhost:${PORT}`)
 );

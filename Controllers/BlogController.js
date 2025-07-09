@@ -108,15 +108,23 @@ export const deleteBlog = async (req, res) => {
     if (!blog) {
       return res.status(404).json({ success: false, message: "Not found" });
     }
-    if (blog.author.toString() !== req.user.id && req.user.role !== "admin") {
-      return res
-        .status(403)
-        .json({ success: false, message: "Forbidden: not your blog" });
+
+    // ✅ Only author or admin can delete
+    const isAuthor = blog.author.toString() === req.user.id;
+    const isAdmin = req.user.role === "admin";
+
+    if (!isAuthor && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: only author or admin can delete",
+      });
     }
-    await blog.remove();
+
+    await blog.deleteOne(); // safer than .remove()
     res.json({ success: true, message: "Blog deleted" });
   } catch (err) {
     console.error("deleteBlog:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+

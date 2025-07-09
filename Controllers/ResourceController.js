@@ -132,7 +132,7 @@ export const deleteResource = async (req, res) => {
         .json({ success: false, message: "Forbidden: cannot delete this resource" });
     }
 
-    await resource.remove();
+    await resource.deleteOne(); 
     return res.json({ success: true, message: "Resource deleted" });
   } catch (err) {
     console.error("deleteResource Error:", err);

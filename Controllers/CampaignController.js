@@ -116,7 +116,7 @@ export const updateCampaign = async (req, res) => {
     if (endTime !== undefined)         campaign.endTime     = new Date(endTime);
 
     // 2) Update status if valid
-    if (status && ["active", "pending", "archived"].includes(status)) {
+    if (status && ["active", "pending", "archived","featured"].includes(status)) {
       campaign.status = status;
     }
 
@@ -136,26 +136,30 @@ export const updateCampaign = async (req, res) => {
   }
 };
 
-/**
- * DELETE /api/campaigns/:id
- * Protected: delete a campaign (owner only)
- */
+// Delete a campaign
 export const deleteCampaign = async (req, res) => {
   try {
     const campaign = await Campaign.findById(req.params.id);
     if (!campaign) {
-      return res.status(404).json({ success: false, message: "Not found" });
-    }
-    if (campaign.createdBy.toString() !== req.user.id) {
-      return res
-        .status(403)
-        .json({ success: false, message: "Forbidden: not your campaign" });
+      return res.status(404).json({ success: false, message: "Campaign not found" });
     }
 
-    await campaign.remove();
+    // ✅ Only creator or admin can delete
+    const isOwner = campaign.createdBy.toString() === req.user.id;
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: only creator or admin can delete",
+      });
+    }
+
+    await campaign.deleteOne(); // ✅ safe deletion
     res.json({ success: true, message: "Campaign deleted" });
   } catch (err) {
     console.error("deleteCampaign:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
