@@ -78,7 +78,10 @@ app.use(
   })
 );
 
-
+app.options("/*", cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 
 // ── 3. HEALTHCHECK / BASE ROUTE ────────────────────────────────────────────────
 app.get("/", (_req, res) => {
