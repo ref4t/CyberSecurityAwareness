@@ -1,11 +1,9 @@
-// controllers/resourceController.js
-
+import fs from "fs";
+import path from "path";
 import Resource from "../Models/resourceModel.js";
-import userModel from "../Models/UserModel.js";
 
 /**
  * GET /api/resources
- * Public: List all resources
  */
 export const getAllResources = async (req, res) => {
   try {
@@ -21,18 +19,12 @@ export const getAllResources = async (req, res) => {
 
 /**
  * GET /api/resources/:id
- * Public: Get a single resource by ID
  */
 export const getResourceById = async (req, res) => {
   try {
-    const resource = await Resource.findById(req.params.id).populate(
-      "uploadedBy",
-      "name email"
-    );
+    const resource = await Resource.findById(req.params.id).populate("uploadedBy", "name email");
     if (!resource) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Resource not found" });
+      return res.status(404).json({ success: false, message: "Resource not found" });
     }
     return res.json({ success: true, resource });
   } catch (err) {
@@ -43,7 +35,6 @@ export const getResourceById = async (req, res) => {
 
 /**
  * POST /api/resources
- * Protected: Create a new resource
  */
 export const createResource = async (req, res) => {
   try {
@@ -51,22 +42,16 @@ export const createResource = async (req, res) => {
     const bodyImageUrl = req.body.imageUrl;
 
     if (!title || !link) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Title and link are required" });
+      return res.status(400).json({ success: false, message: "Title and link are required" });
     }
 
-    // Determine imageUrl either from file or body
     let imageUrl;
-    if (req.file && req.file.filename) {
+    if (req.file?.filename) {
       imageUrl = `/uploads/${req.file.filename}`;
     } else if (bodyImageUrl && typeof bodyImageUrl === "string") {
       imageUrl = bodyImageUrl.trim();
     } else {
-      return res.status(400).json({
-        success: false,
-        message: "Either upload an image or provide an imageUrl.",
-      });
+      return res.status(400).json({ success: false, message: "Either upload an image or provide an imageUrl." });
     }
 
     const resource = await Resource.create({
@@ -87,38 +72,36 @@ export const createResource = async (req, res) => {
 
 /**
  * PUT /api/resources/:id
- * Protected: Update a resource (uploader or admin only)
  */
 export const updateResource = async (req, res) => {
   try {
     const resource = await Resource.findById(req.params.id);
     if (!resource) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Resource not found" });
+      return res.status(404).json({ success: false, message: "Resource not found" });
     }
 
     const isUploader = resource.uploadedBy?.toString() === req.user.id;
     const isAdmin = req.user.role?.toLowerCase() === "admin";
-
     if (!isUploader && !isAdmin) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: cannot edit this resource",
-      });
+      return res.status(403).json({ success: false, message: "Forbidden: cannot edit this resource" });
     }
 
     const { title, description, category, link } = req.body;
     const bodyImageUrl = req.body.imageUrl;
 
-    // Update fields
-    if (title !== undefined) resource.title = title?.trim();
-    if (description !== undefined) resource.description = description?.trim();
+    if (title !== undefined) resource.title = title.trim();
+    if (description !== undefined) resource.description = description.trim();
     if (category !== undefined) resource.category = category;
-    if (link !== undefined) resource.link = link?.trim();
+    if (link !== undefined) resource.link = link.trim();
 
-    // ✅ Update image from file or body
-    if (req.file && req.file.filename) {
+    // 🧹 Replace uploaded image & remove old file
+    if (req.file?.filename) {
+      if (resource.imageUrl?.startsWith("/uploads/")) {
+        const oldImagePath = path.join("uploads", path.basename(resource.imageUrl));
+        fs.unlink(oldImagePath, (err) => {
+          if (err) console.warn("Image cleanup failed:", err.message);
+        });
+      }
       resource.imageUrl = `/uploads/${req.file.filename}`;
     } else if (bodyImageUrl && typeof bodyImageUrl === "string") {
       resource.imageUrl = bodyImageUrl.trim();
@@ -134,28 +117,29 @@ export const updateResource = async (req, res) => {
 
 /**
  * DELETE /api/resources/:id
- * Protected: Delete a resource (uploader or admin only)
  */
 export const deleteResource = async (req, res) => {
   try {
     const resource = await Resource.findById(req.params.id);
     if (!resource) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Resource not found" });
+      return res.status(404).json({ success: false, message: "Resource not found" });
     }
 
-    // Only uploader or admin may delete
-    if (
-      resource.uploadedBy.toString() !== req.user.id &&
-      req.user.role !== "admin"
-    ) {
-      return res
-        .status(403)
-        .json({ success: false, message: "Forbidden: cannot delete this resource" });
+    const isUploader = resource.uploadedBy?.toString() === req.user.id;
+    const isAdmin = req.user.role?.toLowerCase() === "admin";
+    if (!isUploader && !isAdmin) {
+      return res.status(403).json({ success: false, message: "Forbidden: cannot delete this resource" });
     }
 
-    await resource.deleteOne(); 
+    // 🧹 Delete uploaded image from server
+    if (resource.imageUrl?.startsWith("/uploads/")) {
+      const imagePath = path.join("uploads", path.basename(resource.imageUrl));
+      fs.unlink(imagePath, (err) => {
+        if (err) console.warn("Image deletion failed:", err.message);
+      });
+    }
+
+    await resource.deleteOne();
     return res.json({ success: true, message: "Resource deleted" });
   } catch (err) {
     console.error("deleteResource Error:", err);
