@@ -1,7 +1,7 @@
-// routes/resourceRoutes.js
-
 import express from "express";
 import multer from "multer";
+import path from "path";
+import fs from "fs";
 import userAuth from "../Middleware/UserAuth.js";
 import {
   getAllResources,
@@ -13,26 +13,50 @@ import {
 
 const router = express.Router();
 
-// multer setup: store uploads in ./uploads/ and use original filename
+// ✅ Ensure uploads/ directory exists
+const uploadDir = path.resolve("uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// ✅ Multer storage setup with unique filenames
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, file.originalname),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const base = path.basename(file.originalname, ext).replace(/\s+/g, "_");
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, `${base}-${uniqueSuffix}${ext}`);
+  }
 });
-const upload = multer({ storage });
+
+// ✅ (Optional) File filter to allow only images
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only image files (JPG, PNG, WEBP) are allowed"), false);
+  }
+};
+
+const upload = multer({ storage, fileFilter });
+
+// Routes
 
 // Public: List all resources
 router.get("/", getAllResources);
 
-// Public: Get a single resource by ID
+// Public: Get single resource
 router.get("/:id", getResourceById);
 
-// Protected: Create a new resource (any authenticated user)
+// Protected: Create
 router.post("/", userAuth, upload.single("image"), createResource);
 
-// Protected: Update an existing resource (only uploader or admin)
+// Protected: Update
 router.put("/:id", userAuth, upload.single("image"), updateResource);
 
-// Protected: Delete a resource (only uploader or admin)
+// Protected: Delete
 router.delete("/:id", userAuth, deleteResource);
 
 export default router;
