@@ -47,7 +47,8 @@ export const getResourceById = async (req, res) => {
  */
 export const createResource = async (req, res) => {
   try {
-    const { title, description, category, link, imageUrl } = req.body;
+    const { title, description, category, link } = req.body;
+    const bodyImageUrl = req.body.imageUrl;
 
     if (!title || !link) {
       return res
@@ -55,12 +56,25 @@ export const createResource = async (req, res) => {
         .json({ success: false, message: "Title and link are required" });
     }
 
+    // Determine imageUrl either from file or body
+    let imageUrl;
+    if (req.file && req.file.filename) {
+      imageUrl = `/uploads/${req.file.filename}`;
+    } else if (bodyImageUrl && typeof bodyImageUrl === "string") {
+      imageUrl = bodyImageUrl.trim();
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Either upload an image or provide an imageUrl.",
+      });
+    }
+
     const resource = await Resource.create({
       title: title.trim(),
       description: (description || "").trim(),
       category,
       link: link.trim(),
-      imageUrl: imageUrl?.trim() || "",
+      imageUrl,
       uploadedBy: req.user.id,
     });
 
@@ -84,22 +98,31 @@ export const updateResource = async (req, res) => {
         .json({ success: false, message: "Resource not found" });
     }
 
-    // Only uploader or admin may update
-    if (
-      resource.uploadedBy.toString() !== req.user.id &&
-      req.user.role !== "admin"
-    ) {
-      return res
-        .status(403)
-        .json({ success: false, message: "Forbidden: cannot edit this resource" });
+    const isUploader = resource.uploadedBy?.toString() === req.user.id;
+    const isAdmin = req.user.role?.toLowerCase() === "admin";
+
+    if (!isUploader && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: cannot edit this resource",
+      });
     }
 
-    const { title, description, category, link, imageUrl } = req.body;
-    if (title !== undefined) resource.title = title.trim();
-    if (description !== undefined) resource.description = description.trim();
+    const { title, description, category, link } = req.body;
+    const bodyImageUrl = req.body.imageUrl;
+
+    // Update fields
+    if (title !== undefined) resource.title = title?.trim();
+    if (description !== undefined) resource.description = description?.trim();
     if (category !== undefined) resource.category = category;
-    if (link !== undefined) resource.link = link.trim();
-    if (imageUrl !== undefined) resource.imageUrl = imageUrl.trim();
+    if (link !== undefined) resource.link = link?.trim();
+
+    // ✅ Update image from file or body
+    if (req.file && req.file.filename) {
+      resource.imageUrl = `/uploads/${req.file.filename}`;
+    } else if (bodyImageUrl && typeof bodyImageUrl === "string") {
+      resource.imageUrl = bodyImageUrl.trim();
+    }
 
     await resource.save();
     return res.json({ success: true, resource });
