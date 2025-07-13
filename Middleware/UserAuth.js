@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import User from "../Models/UserModel.js"; // Adjust path if needed
 
-const userAuth = (req, res, next) => {
+const userAuth = async (req, res, next) => {
   const { token } = req.cookies;
 
   if (!token) {
@@ -14,7 +15,12 @@ const userAuth = (req, res, next) => {
       return res.status(401).json({ success: false, message: "Invalid Token" });
     }
 
-    req.user = { id: decoded.id }; 
+    const user = await User.findById(decoded.id).select("-password"); // ✅ Fetch user with role
+    if (!user) {
+      return res.status(401).json({ success: false, message: "User not found" });
+    }
+
+    req.user = user; // ✅ Now req.user contains id, role, etc.
     next();
   } catch (err) {
     return res.status(401).json({ success: false, message: err.message });
