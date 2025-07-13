@@ -78,12 +78,12 @@ export const registration = async (req, res) => {
 
     // Send welcome email
     const compiledWelcomeEmail = welcomeEmail.replace("{{name}}", user.name);
-    // await transporter.sendMail({
-    //   from: process.env.SENDER_EMAIL,
-    //   to: user.email,
-    //   subject: "Welcome to CyberShield!",
-    //   html: compiledWelcomeEmail
-    // });
+    await transporter.sendMail({
+      from: process.env.SENDER_EMAIL,
+      to: user.email,
+      subject: "Welcome to CyberShield!",
+      html: compiledWelcomeEmail
+    });
 
     return res.status(201).json({ success: true, message: "Registration successful" });
   } catch (error) {
